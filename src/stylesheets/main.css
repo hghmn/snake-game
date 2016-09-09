@@ -1,0 +1,13 @@
+body {
+    font-family: monospace, sans-serif;
+    color: #333;
+}
+
+/* layout */
+#app {
+    width: 800px;
+    margin: 0 auto;
+}
+#app h1 {
+    margin: 1em 0;
+}

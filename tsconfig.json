@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "module": "es2015",
+        "removeComments": false,
+        "sourceMap": true,
+        "moduleResolution": "node",
+    },
+    "exclude": [
+        "node_modules",
+        "dist",
+        "typings",
+        "shell",
+        "browser",
+        "docs"
+    ]
+}

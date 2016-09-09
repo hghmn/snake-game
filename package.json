@@ -1,0 +1,36 @@
+{
+  "name": "escape-velocity",
+  "version": "0.0.1",
+  "description": "One Button Space Adventure",
+  "author": "Nathan Hughes <hghmn>",
+  "license": "MIT",
+  "scripts": {
+    "build": "gulp",
+    "pack": "gulp && gulp zip",
+    "static-server": "static dist -a 0.0.0.0",
+    "start": "npm run build && npm run static-server"
+  },
+  "dependencies": {
+    "simple-peer": "^6.0.7"
+  },
+  "devDependencies": {
+    "del": "^2.2.1",
+    "gulp": "3.9.1",
+    "gulp-buffer": "0.0.2",
+    "gulp-clean-css": "^2.0.12",
+    "gulp-concat-css": "2.3.0",
+    "gulp-livereload": "^3.8.1",
+    "gulp-nunjucks": "^2.2.0",
+    "gulp-rename": "1.2.2",
+    "gulp-sourcemaps": "1.6.0",
+    "gulp-typescript": "^2.13.6",
+    "gulp-uglify": "1.5.4",
+    "gulp-util": "^3.0.7",
+    "gulp-zip": "3.2.0",
+    "merge-stream": "^1.0.0",
+    "rollup-plugin-typescript": "^0.7.7",
+    "rollup-stream": "1.11.0",
+    "vinyl-buffer": "1.0.0",
+    "vinyl-source-stream": "1.1.0"
+  }
+}
