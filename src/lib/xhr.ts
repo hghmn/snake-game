@@ -23,7 +23,7 @@ export function xhr<T>(method, url, data: { [key: string]: string | number }, ca
 }
 
 export function get<T>(url, callback) {
-    return xhr<T>('POST', url, null, callback);
+    return xhr<T>('GET', url, null, callback);
 }
 export function post<T>(url, data, callback) {
     return xhr<T>('POST', url, data, callback);

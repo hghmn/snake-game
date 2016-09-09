@@ -28,13 +28,14 @@ function makePeer(iam: string, offer?: any) {
     });
     const channelShort = offer ? offer.channel : p.channelName.substr(0, 7);
 
-    // delete this peer on errors
+    // TODO: on errors or disconnect, remove this peer from the peerList and re-init it
     p.on('error', (err) => console.log('error', err));
 
     // Do stuff and things when we connect and have data
     p.on('connect', () => {
         console.log('CONNECT');
         p.send(`[${iam}] whatever ${Math.random()}`);
+        setTimeout(() => p.send(`[delayed][${iam}] whatever ${Math.random()}`), 1000);
     });
 
     p.on('data', (data) => console.log('[DATADATA]: ' + data));
@@ -85,7 +86,7 @@ export function connect(iam: string, options?: { count: number }) {
     }
 
     // DELETE: debug
-    window['peerList'] = peerList;
+    // window['peerList'] = peerList;
 
     // TODO: move this out to a worker
     // long polling on an interval until connected to signal server
@@ -129,8 +130,8 @@ export function connect(iam: string, options?: { count: number }) {
                 if (openPeers.length) {
                     console.log('offers', offers);
 
-                    //
-                    for (let i = 0; i < offers.length; i++) {
+                    // shift openPeers out until gone
+                    for (let i = 0; i < offers.length && openPeers.length > 0; i++) {
                         // push the first position openPeer to peerList
                         peerList.push(openPeers.shift().init(iam, offers[i]));
                     }
