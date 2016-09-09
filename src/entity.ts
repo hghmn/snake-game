@@ -1,12 +1,17 @@
-// define a world entity - something that exists, and can be drawn
-import { Vec2, Vector, UnitVector } from './vector';
+import { IVec } from './interfaces';
+import { makeVector } from './vector';
 
-export abstract class Entity {
-    public location = Vector(0, 0);
-    public direction = UnitVector(0, 1).rotate(90);
+export class Entity {
+    public vec: IVec;
+    constructor(vector, options) {
+        this.vec = makeVector.apply(this, vector);
+    }
 
-    /**
-     * An entity should be able to describe itself with a vector array
-     */
-    abstract render(): Vec2[];
+    update() {
+        // update the entities here
+    }
+
+    render() {
+        // TODO: handle rendering this entity here
+    }
 }

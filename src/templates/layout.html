@@ -9,6 +9,10 @@
 <body>
     {% block body %}{% endblock %}
 
+    <script type="text/javascript">
+        __globals__ = window.__globals__ || {};
+        __globals__["build"] = "{{ build }}";
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
