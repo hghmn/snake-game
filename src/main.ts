@@ -3,6 +3,7 @@ import { Stage } from './stage';
 import { InteractionManager } from './input';
 import { slowCopy } from './utils';
 import { Entity } from './entity';
+import * as Peer from './peer';
 
 // load up globals
 const config = window['__globals__'] || {};
@@ -10,6 +11,9 @@ const config = window['__globals__'] || {};
 interface IGameState {
     snake: IVec2;
 }
+
+// try to connect
+Peer.connect();
 
 // Define game entities
 const entities = {

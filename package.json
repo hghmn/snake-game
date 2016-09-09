@@ -5,13 +5,15 @@
   "author": "Nathan Hughes <hghmn>",
   "license": "MIT",
   "scripts": {
+    "browser": "tsc && browserify -o dist/bundle.js dist/src/main.js",
     "build": "gulp",
     "pack": "gulp && gulp zip",
     "static-server": "static dist -a 0.0.0.0",
     "start": "npm run build && npm run static-server"
   },
   "dependencies": {
-    "simple-peer": "^6.0.7"
+    "simple-peer": "^6.0.7",
+    "xhr": "^2.2.2"
   },
   "devDependencies": {
     "del": "^2.2.1",
@@ -29,6 +31,7 @@
     "gulp-util": "^3.0.7",
     "gulp-zip": "3.2.0",
     "merge-stream": "^1.0.0",
+    "rollup-plugin-node-resolve": "^2.0.0",
     "rollup-plugin-typescript": "^0.7.7",
     "rollup-stream": "1.11.0",
     "tslint": "^3.15.1",

@@ -1,6 +1,6 @@
 // Game Elements
 export interface IEntities {
-    [key: string]: IVec2;
+    [key: string]: any; // IVec2;
 }
 
 // Vectors

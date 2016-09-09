@@ -37,7 +37,7 @@ export class InteractionManager<T> {
     }
 
     update(entities: IEntities) {
-        console.log('update entity state');
+        // console.log('update entity state');
 
         // BAD: currently just pushing our state to the main state
         Object.keys(entities).forEach(key => {

@@ -12,3 +12,4 @@ Massive multiplayer game, based on the classic 'snake'
 ## TODO
   - Create signalling server
   - Clean up build process
+  - Polyfills: promises
