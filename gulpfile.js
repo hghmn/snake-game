@@ -7,7 +7,7 @@ const gulp        = require('gulp');
 // livereload.listen();
 
 // Bootstrap individual task files
-[ 'clean', 'build', 'css', 'template', /* 'watch', */ 'zip' ]
+[ 'clean', 'lint', 'build', 'css', 'template', /* 'watch', */ 'zip' ]
     .forEach( task => require(`./tasks/${ task }`)() );
 
 gulp.task( 'default', [ 'clean', 'build', 'css', 'template' ] );
