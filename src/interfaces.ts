@@ -2,6 +2,9 @@
 export interface IEntities {
     [key: string]: any; // IVec2;
 }
+export interface IGameState {
+    snake: IVec2;
+}
 
 // Vectors
 export interface IVec { [index: number]: number; }

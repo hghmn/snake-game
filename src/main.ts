@@ -1,20 +1,20 @@
-import { IEntities, IVec2 } from './interfaces';
+import { IEntities, IGameState, IVec2 } from './interfaces';
 import { Stage } from './stage';
 import { InteractionManager } from './input';
-import { slowCopy } from './utils';
 import { Entity } from './entity';
 import * as Peer from './peer';
+import { slowCopy, guid } from './lib/utils';
 
 // load up globals
 const config = window['__globals__'] || {};
 
-interface IGameState {
-    snake: IVec2;
-}
+// when you new up the page, you get an identity
+const iam = guid();
 
-// try to connect
-Peer.connect();
+// try to connect to other peers
+const peerList = Peer.connect(iam, { count: 3 });
 
+// TODO: make these extend the base Entity class
 // Define game entities
 const entities = {
     snake: new Entity([ 100, 100 ], { fill: '#00F' }),
@@ -34,8 +34,10 @@ const stage = new Stage(stageSettings);
 const inputs = new InteractionManager<IGameState>({
     // DOM Events
     'load': () => {
-        console.info('snake game demo');
-        console.info(`build: ${ config.build }`);
+        console.info(`---- ${ config.title } ----`);
+        console.info(`build : ${ config.build }`);
+        console.info(`iam   : ${iam}`);
+        console.info(`peers : ${peerList.map(p => p.channelName).join('\n        ')}`);
     },
     'resize': () => console.warn('window resize'),
     // Keyboard Events
@@ -44,12 +46,14 @@ const inputs = new InteractionManager<IGameState>({
     'K39': (e, s) => s.snake.vec.x += 20, // console.log('right key')
     'K40': (e, s) => s.snake.vec.y += 20, // console.log('down key'),
     // 'K32': (e, s) => console.log('spacebar'),
-},  slowCopy(entities));
+},  slowCopy(entities)); // TODO: when state is immutable, pass it in here
 
 // run the game loop
 function loop() {
     // update all entities
-    inputs.update(entities);
+    inputs.update(entities); // TODO: when state is immutable, let state change happen outside of loop
+
+    // time/interval based updates
     // entities.update();
 
     // render the entities to the stage

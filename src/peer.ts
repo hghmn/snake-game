@@ -1,28 +1,32 @@
-// peering stuffs
 // necessary typings
 // TODO: Promise polyfill
 declare var Promise: any;
 
-const xhr = require('xhr');
 const Peer = require('simple-peer');
+import { log } from './lib/utils';
+import { post, get } from './lib/xhr';
 
-const signallingServer = '/signalling/read.php';
-const peerList = [];
+interface ISignalResults {
+    fetched: string; // timestamp
+    signals: Array<{
+        channel: string; // partial hash from the initiating peer
+        message: string; // sdp connection string
+        type: number | string; // the signal type, should be an int
+    }>; // timestamp
+}
+
 enum SignalTypes {
-    offer,
+    offer = 1,
     answer,
 }
 
-// DELETE: debug
-window['peerList'] = peerList;
-
-
-function makePeer() {
+function makePeer(iam: string, offer?: any) {
     // new up a peer for
     const p = new Peer({
-        initiator: true, // location.hash === '#1',
+        initiator: offer ? false : true, // if we start with an offer, they initiated
         trickle: false
     });
+    const channelShort = offer ? offer.channel : p.channelName.substr(0, 7);
 
     // delete this peer on errors
     p.on('error', (err) => console.log('error', err));
@@ -30,75 +34,140 @@ function makePeer() {
     // Do stuff and things when we connect and have data
     p.on('connect', () => {
         console.log('CONNECT');
-        p.send('whatever' + Math.random());
+        p.send(`[${iam}] whatever ${Math.random()}`);
     });
 
-    p.on('data', (data) => console.log('data: ' + data));
+    p.on('data', (data) => console.log('[DATADATA]: ' + data));
 
-
-    // TODO: use a super basic xhr-based signalling endpoint to hold on to our messages
-    // Currently passing messages up and through textarea
+    // Event when _peer_ sends out a signal - pass it up to the signal server
     p.on('signal', (data) => {
-        console.log('SIGNAL', data);
-        //  document.querySelector('#outgoing').textContent = JSON.stringify(data);
 
-        if (data.type === 'offer') {
-            xhr.post('/signalling/write.php', { body: JSON.stringify(data) }, (err, res) => {
-                if (err) {
-                    console.log(err);
-                }
+        const body = {
+            type: SignalTypes[data.type],
+            iam,
+            channel: channelShort,
+            message: JSON.stringify(data),
+        };
 
-                console.log('post', res);
-            });
-        }
+        // post our offer/answer to the signalling server
+        post('/signalling/write.php', body, (err, res) => {
+            if (err) {
+                console.error(err);
+            }
+
+            console.log(`[${channelShort}][SIGNAL ${data.type}]`, { data, res });
+        });
     });
 
-    //
-    // return {
-    //     signal: (message) => p.signal(message),
-    // };
-    return p;
-}
-
-
-// try to reach out to the
-function tryConnect(options?: { delay: number }) {
-    const delay = options && options.delay;
-    return new Promise((resolve, reject) => {
-        setTimeout(() =>
-            xhr.get(signallingServer, (err, res) => {
-                if (err || res.statusCode !== 200) {
-                    reject(err || res.statusCode);
-                }
-                const json = JSON.parse(res.body);
-                // 'signalling server response received:',
-                resolve(json);
-            }), delay || 0);
-    });
-}
-
-// expose this out to the user
-export function connect() {
-    // post up our offer(s)
-    for (let i = 0; i < 1; i++) {
-        peerList.push(makePeer());
+    // If we initialized with an offer (from signal server) trigger it to send out an answer
+    if (offer && offer.message) {
+        p.signal(offer.message);
     }
 
-    // then start listening for the responses
-    //
+    return {
+        hasConnection: false,
+        channelName: p.channelName,
+        signal: p.signal.bind(p),
+    };
+}
 
-    // first try to connect on any existing offers
-    // tryConnect()
-    //     .then(res => res.signals.length ? res : tryConnect({ delay: 1000 }))
-    //     .then(res => res.signals.length ? res : tryConnect({ delay: 3000 }))
-    //     .then(res => {
-    //         if (res.signals.length) {
-    //             console.info('connected, trying to make peer', res);
-    //             res.signals.forEach(makePeer)
-    //         } else {
-    //             return Promise.reject('failed to connect');
-    //         }
-    //     })
-    //     .catch(err => console.error(err));
+export function connect(iam: string, options?: { count: number }) {
+    const peerCount = options && options.count || 3; // default to 3 peers
+    const peerList = [];
+    const openPeers = [];
+
+    // intialize peers
+    for (let i = 0; i < peerCount; i++) {
+        openPeers[i] = {
+            peer: i,
+            init: makePeer,
+        };
+    }
+
+    // DELETE: debug
+    window['peerList'] = peerList;
+
+    // TODO: move this out to a worker
+    // long polling on an interval until connected to signal server
+    const longPollSignallingServer = (function () {
+        const limit = 20
+        const interval = 300;
+        let drySpell = 0; // don't want to go over this
+
+        return function() {
+        setTimeout(() =>
+            get<ISignalResults>('/signalling/read.php', (err, res) => {
+                if (err) {
+                    console.error(err);
+                }
+
+                // keep looping until we get something
+                if (!res.signals.length && ++drySpell < limit) {
+                    return longPollSignallingServer();
+                }
+
+                // we have signals, let's see if any are offers
+                console.log(`[${res.fetched}] [${res.signals.length}] results from signalling server`);
+
+                // filter the offers from the answers
+                let offers = [];
+                let answers = [];
+
+                for (let i = 0; i < res.signals.length; i++) {
+                    if (res.signals[i].iam === iam) {
+                        continue;
+                    }
+
+                    if (res.signals[i].type == SignalTypes.offer) {
+                        offers.push(res.signals[i]);
+                    } else if (res.signals[i].type == SignalTypes.answer) {
+                        answers.push(res.signals[i]);
+                    }
+                }
+
+                // allocate open peers
+                if (openPeers.length) {
+                    console.log('offers', offers);
+
+                    //
+                    for (let i = 0; i < offers.length; i++) {
+                        // push the first position openPeer to peerList
+                        peerList.push(openPeers.shift().init(iam, offers[i]));
+                    }
+
+                    console.log('peerList', peerList);
+                    console.log('available', openPeers);
+
+                    // have remaining peers initiate offer signals
+                    while (openPeers.length) {
+                        peerList.push(openPeers.shift().init(iam));
+                    }
+                }
+
+                if (answers.length) {
+                    // walk through the peerlist and see if any are waiting on answers
+                    for (let i = 0; i < peerList.length; i++) {
+                        if (peerList[i].channelName && !peerList[i].hasConnection) {
+                            for (let j = 0; j < answers.length; j++) {
+                                if (peerList[i].channelName.indexOf(answers[j].channel) === 0) {
+                                    // we found an answer!!
+                                    peerList[i].signal(answers[j].message);
+                                    peerList[i].hasConnection = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                drySpell = 0;
+                longPollSignallingServer();
+            }), interval);
+        }
+    }());
+
+    // start the loop - every 300ms, for 15s
+    longPollSignallingServer();
+
+    return peerList;
 }
 
